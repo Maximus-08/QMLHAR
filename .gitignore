@@ -35,3 +35,40 @@ __pycache__/
 # System files
 .DS_Store
 *.Zone.Identifier
+
+# Research Paper documents
+/MPSQCL LSTM Research paper.md
+/research_paper_draft.md
+
+# LaTeX paper source, PDFs, and build files
+/paper.tex
+/paper.pdf
+/paper.aux
+/paper.log
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+
+# Paper figures and tables
+/figures/
+
+# Local checkpoints and logs
+/opportunity_notebook1/
+*.log
+
+# Scratch plots and code files
+/image.png
+/scratch_check.py
+
+# Experiment results markdown
+mpsqcl_ablation_results_*.md
+mpsqcl_candidates_results_*.md
+mpsqcl_lstm_candidates_shar_results.md
+
+# Kaggle Notebooks
+qmlhar_kaggle_finetuning.ipynb
+qmlhar_kaggle_training.ipynb

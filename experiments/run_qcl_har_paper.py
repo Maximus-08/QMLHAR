@@ -26,9 +26,9 @@ import numpy as np
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.data.har_datasets_paper import get_paper_dataloaders
-from src.data.augmentations_paper import ContrastiveViewGeneratorPaper
-from src.models.encoder_paper import HAREncoderPaper
-from src.models.quantum_head_paper import QuantumProjectionHeadPaper
+from src.data.augmentations import ContrastiveViewGeneratorPaper
+from src.models.encoder import HAREncoderPaper
+from src.models.quantum_head import QuantumProjectionHeadPaper
 from src.losses.ntxent import NTXentLoss
 
 

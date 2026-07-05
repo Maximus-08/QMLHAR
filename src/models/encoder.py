@@ -24,12 +24,13 @@ class HAREncoder(nn.Module):
     - Fed into a linear classifier for supervised fine-tuning
     """
 
-    def __init__(self, in_channels=9, feature_dim=256, dropout_p=0.35):
+    def __init__(self, in_channels=9, feature_dim=256, dropout_p=0.35, pooling="avg"):
         """
         Args:
             in_channels: Number of input sensor channels (default 9 for UCI-HAR)
             feature_dim: Output feature dimension (default 256 = 2^8 for amplitude encoding)
             dropout_p: Dropout probability after the first convolutional block
+            pooling: Pooling layer to use in block4 ("avg" or "max")
         """
         super(HAREncoder, self).__init__()
 
@@ -60,18 +61,42 @@ class HAREncoder(nn.Module):
             nn.MaxPool1d(kernel_size=2),
         )
 
-        # Layer 4: Conv(128 -> 256) + BN + ReLU + AdaptiveAvgPool
+        # Layer 4: Conv(128 -> 256) + BN + ReLU + Adaptive Pooling
+        if pooling == "avg":
+            pool_layer = nn.AdaptiveAvgPool1d(1)
+        elif pooling == "max":
+            pool_layer = nn.AdaptiveMaxPool1d(1)
+        else:
+            raise ValueError(f"Unknown pooling type: {pooling}")
+
         self.block4 = nn.Sequential(
             nn.Conv1d(128, feature_dim, kernel_size=8, stride=1, padding=4),
             nn.BatchNorm1d(feature_dim),
             nn.ReLU(inplace=True),
-            nn.AdaptiveAvgPool1d(1),  # Global average pooling -> (batch, 256, 1)
+            pool_layer,
         )
+
+    def forward_unpooled(self, x):
+        """
+        Extract spatial-temporal features before the final global pooling layer.
+
+        Args:
+            x: Tensor of shape (batch, in_channels, T)
+        Returns:
+            Tensor of shape (batch, feature_dim, L_seq)
+        """
+        x = self.block1(x)
+        x = self.block2(x)
+        x = self.block3(x)
+        # Apply layers in block4 except the final pooling layer
+        for layer in list(self.block4)[:-1]:
+            x = layer(x)
+        return x
 
     def forward(self, x):
         """
         Args:
-            x: Tensor of shape (batch, 9, 128)
+            x: Tensor of shape (batch, in_channels, T)
         Returns:
             Tensor of shape (batch, 256)
         """
@@ -83,17 +108,34 @@ class HAREncoder(nn.Module):
         return x
 
 
+class HAREncoderPaper(HAREncoder):
+    """
+    Paper-compliant 4-layer 1D CNN encoder for Human Activity Recognition.
+    Inherits from HAREncoder but is pre-configured with Max Pooling at the end
+    of block4 to match the paper specifications.
+    """
+
+    def __init__(self, in_channels=9, feature_dim=256, dropout_p=0.35):
+        super(HAREncoderPaper, self).__init__(
+            in_channels=in_channels,
+            feature_dim=feature_dim,
+            dropout_p=dropout_p,
+            pooling="max",
+        )
+
+
 # Quick verification
 if __name__ == "__main__":
-    model = HAREncoder()
-    dummy = torch.randn(8, 9, 128)
-    out = model(dummy)
-    print(f"Input shape:  {dummy.shape}")
-    print(f"Output shape: {out.shape}")
-    print(f"Parameters:   {sum(p.numel() for p in model.parameters()):,}")
-
-    # Verify shapes at each block
-    x = dummy
-    for i, block in enumerate([model.block1, model.block2, model.block3, model.block4]):
-        x = block(x)
-        print(f"After block {i + 1}: {x.shape}")
+    for name, model_cls in [
+        ("HAREncoder (AvgPool)", HAREncoder),
+        ("HAREncoderPaper (MaxPool)", HAREncoderPaper),
+    ]:
+        print(f"\n--- Testing {name} ---")
+        model = model_cls()
+        dummy = torch.randn(8, 9, 128)
+        out = model(dummy)
+        unpooled = model.forward_unpooled(dummy)
+        print(f"Input shape:      {dummy.shape}")
+        print(f"Output shape:     {out.shape}")
+        print(f"Unpooled shape:   {unpooled.shape}")
+        print(f"Parameters:       {sum(p.numel() for p in model.parameters()):,}")

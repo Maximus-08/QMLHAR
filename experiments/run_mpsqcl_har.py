@@ -35,7 +35,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.data.har_datasets_paper import get_paper_dataloaders
 from src.data.augmentations import ContrastiveViewGenerator
 from src.models.encoder import HAREncoder
-from src.models.quantum_head import QuantumProjectionHead
+from src.models.quantum_head import QuantumProjectionHead, QuantumProjectionHeadPaper
 from src.losses.mpsqcl_loss import MPSQCLLoss
 
 
@@ -115,12 +115,22 @@ def pretrain(args):
         device
     )
 
-    quantum_head = QuantumProjectionHead(
-        input_dim=2**args.num_qubits,
-        num_qubits=args.num_qubits,
-        q_layers=args.q_layers,
-        device_type=args.device_type,
-    ).to(device)
+    if args.use_paper_head:
+        print("Using paper-compliant quantum head (Ry + CNOT ring)")
+        quantum_head = QuantumProjectionHeadPaper(
+            input_dim=2**args.num_qubits,
+            num_qubits=args.num_qubits,
+            q_layers=args.q_layers,
+            device_type=args.device_type,
+        ).to(device)
+    else:
+        print("Using standard StronglyEntanglingLayers quantum head")
+        quantum_head = QuantumProjectionHead(
+            input_dim=2**args.num_qubits,
+            num_qubits=args.num_qubits,
+            q_layers=args.q_layers,
+            device_type=args.device_type,
+        ).to(device)
 
     print(f"Encoder parameters:      {sum(p.numel() for p in encoder.parameters()):,}")
     print(
@@ -146,6 +156,9 @@ def pretrain(args):
         quantum_head.load_state_dict(ckpt["quantum_head"])
         optimizer.load_state_dict(ckpt["optimizer"])
         start_epoch = ckpt.get("epoch", 0)
+        # Reset learning rates to args.lr so CosineAnnealingLR initializes base_lrs correctly
+        for g in optimizer.param_groups:
+            g["lr"] = args.lr
         print(f"Resumed from epoch {start_epoch}")
 
     scheduler = optim.lr_scheduler.CosineAnnealingLR(
@@ -220,9 +233,10 @@ def pretrain(args):
 
         # Save checkpoint every N epochs
         if (epoch + 1) % args.save_every == 0 or (epoch + 1) == args.epochs:
+            ckpt_prefix = f"mpsqcl_checkpoint_depth{args.q_layers}" if args.q_layers != 3 else "mpsqcl_checkpoint"
             ckpt_path = os.path.join(
                 os.path.dirname(args.output_file),
-                f"mpsqcl_checkpoint_epoch{epoch + 1}_{args.dataset}.pt",
+                f"{ckpt_prefix}_epoch{epoch + 1}_{args.dataset}.pt",
             )
             torch.save(
                 {
@@ -243,9 +257,10 @@ def pretrain(args):
     )
 
     # Save final encoder weights (for fine-tuning)
+    encoder_prefix = f"mpsqcl_encoder_pretrained_depth{args.q_layers}" if args.q_layers != 3 else "mpsqcl_encoder_pretrained"
     encoder_path = os.path.join(
         os.path.dirname(args.output_file),
-        f"mpsqcl_encoder_pretrained_{args.dataset}.pt",
+        f"{encoder_prefix}_{args.dataset}.pt",
     )
     torch.save(encoder.state_dict(), encoder_path)
     print(f"Saved pre-trained encoder: {encoder_path}")
@@ -556,7 +571,7 @@ def main():
         "--dataset",
         type=str,
         default="ucihar",
-        choices=["ucihar", "shar", "hhar", "motionsense", "uschad", "mobiact"],
+        choices=["ucihar", "shar", "hhar", "motionsense", "uschad", "mobiact", "opportunity", "opportunity_gestures"],
         help="Dataset name",
     )
     parser.add_argument("--data_dir", type=str, default=default_data_dir)
@@ -608,7 +623,12 @@ def main():
         help="Number of qubits (feature_dim = 2^num_qubits)",
     )
     parser.add_argument(
-        "--q_layers", type=int, default=3, help="Number of StronglyEntanglingLayers"
+        "--q_layers", type=int, default=3, help="Number of VQC layers"
+    )
+    parser.add_argument(
+        "--use_paper_head",
+        action="store_true",
+        help="Use paper-compliant quantum head (Ry + CNOT ring) instead of StronglyEntanglingLayers",
     )
     parser.add_argument(
         "--device_type",

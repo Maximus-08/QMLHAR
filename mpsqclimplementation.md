@@ -54,7 +54,7 @@ $$L_i = \frac{1}{|P(i)|} \sum_{n \in P(i)} -\log \frac{\exp(\text{sim}(z_i, z_n)
 
 ## Data Augmentation
 
-### Standard Pipeline (`augmentations.py`) — 7 strategies:
+### Standard Pipeline (`augmentations.py`) — 11 strategies:
 1. **Jitter** — additive Gaussian noise (σ = 0.05)
 2. **Negate** — vertical flip of the signal (x → -x)
 3. **Permute** — slice into 5 segments and shuffle
@@ -62,6 +62,10 @@ $$L_i = \frac{1}{|P(i)|} \sum_{n \in P(i)} -\log \frac{\exp(\text{sim}(z_i, z_n)
 5. **Rotate** — random 3D rotation matrix applied to each 3-axis sensor group
 6. **Scale** — per-channel random scaling ~ N(1, 0.1)
 7. **Temporal flip** — reverse the time dimension
+8. **Time warp** — non-linear temporal scaling via cubic spline interpolation
+9. **Window warp** — local temporal window scaling and interpolation
+10. **Channel shuffle** — spatial channel ordering permutation
+11. **Permutation-Jitter** — compound segment permutation followed by Gaussian jitter
 
 Each view randomly selects **one** augmentation from the registry.
 
@@ -143,7 +147,7 @@ Same as QCL:
 | :--- | :--- | :--- |
 | **Encoder** | `HAREncoder` (unfrozen during fine-tuning) | `HAREncoderPaper` (frozen during fine-tuning) |
 | **VQC Depth** | D=3 (`StronglyEntanglingLayers`, 72 params) | D=1 (Custom Ry + CNOT ring, 8 params) |
-| **Data Augmentation** | 7 strategies (jitter, negate, permute, resample, rotate, scale, t_flip) | 2 strategies (resample + negate only) |
+| **Data Augmentation** | 11 strategies (jitter, negate, permute, resample, rotate, scale, t_flip, t_warp, w_warp, channel_shuffle, perm_jit) | Optimal dataset-specific sets (4-6 views) |
 | **Fine-tuning LR** | 1e-3 (encoder: 1e-4, classifier: 1e-3) | 1e-1 (classifier only) |
 | **Feature normalization** | None | L2-normalized before classifier |
 | **Best metric** | Test accuracy | Macro F1 score |

@@ -9,7 +9,7 @@ This repository explores the application of Quantum Machine Learning (QML) model
 - `src/`
   - `data/`
     - `har_datasets_paper.py`: Paper-compliant loaders for 6 HAR datasets (`ucihar`, `shar`, `hhar`, `motionsense`, `uschad`, `mobiact`) supporting standard and weighted class random sampling.
-    - `augmentations.py`: Full augmentation suite (7 strategies: jitter, negate, permute, resample, rotate, scale, temporal flip) for standard contrastive pre-training.
+    - `augmentations.py`: Full augmentation suite (11 strategies: jitter, negate, permute, resample, rotate, scale, temporal flip, time warp, window warp, channel shuffle, permutation-jitter) for standard contrastive pre-training.
     - `augmentations_paper.py`: Paper-compliant augmentations (resampling and negation only).
     - `download_and_preprocess_datasets.py`: Automated dataset downloader and preprocessor for all 6 datasets.
   - `models/`
@@ -75,6 +75,7 @@ The table below summarizes the performance of all evaluated models. Classical ba
 | **Random Forest** | Hand-crafted 561-Feat | None | 92.57% | 0.9241 | 8.26s | Ensemble tree baseline. |
 | **Classical 1D CNN** | Raw Signals (9x128) | No Bottleneck (128 features) | 91.55% | 0.9160 | 15.74s | Learns end-to-end representations directly from local spatial-temporal patterns. |
 | **Classical 1D CNN** | Raw Signals (9x128) | 4-Dim Bottleneck (Linear + Tanh) | 93.01% | 0.9305 | 12.53s | Demonstrates that classical gradient descent can successfully optimize through a 4-dim bottleneck. |
+| **Classical LSTM** | Raw Signals (9x128) | None | **95.49%** | **0.9591** | **65.3s** | Processes temporal patterns sequentially, significantly outperforming the 1D CNN. |
 | **Hybrid QCNN (10e)** | Raw Signals (9x128) | 4-Dim Bottleneck (4 Qubits VQC) | 73.39% | 0.6955 | 1118.89s | Suffers from slow convergence and simulation overhead (run for only 10 epochs on a 50% subset). |
 | **Hybrid QCNN (50e)** | Raw Signals (9x128) | 4-Dim Bottleneck (4 Qubits VQC) | **92.53%** | **0.9256** | **3.82 hours (13768s)** | **Completed.** Final test accuracy 92.53%, peaked at **93.21%** (Epoch 47). Surpasses classical 1D CNN without bottleneck (91.55%). |
 | **Hybrid QCNN (6q, 30e)** | Raw Signals (9x128) | 6-Dim Bottleneck (6 Qubits VQC) | **93.76%** | **0.9387** | **4.39 hours (15805s)** | **Completed.** Final test accuracy 93.76%, peaked at **93.89%** (Epoch 23). Best performing QML model, outperforming all classical CNN baselines. |
@@ -85,8 +86,13 @@ The table below summarizes the performance of all evaluated models. Classical ba
 | **QCL HAR (Pre+Fine, 150e)** | Raw Signals (9x128) | 256-Dim Features (8 Qubits VQC) | **96.64%** | **0.9665** | **56.0 mins (3359s)** | **Completed.** 150-epoch self-supervised pre-training + 30-epoch classical fine-tuning. Best performing model overall, outperforming the best classical SVM (96.10%). |
 | **QCL HAR (Pre+Fine, 50e)** | Raw Signals (9x128) | 256-Dim Features (8 Qubits VQC) | **95.83%** | **0.9578** | **18.8 mins (1130s)** | **Completed.** 50-epoch self-supervised pre-training + 30-epoch classical fine-tuning. Reaches high accuracy very quickly, retaining over 99% of the performance of the 150-epoch run. |
 | **MPSQCL HAR (Pre+Fine, 50e)** | Raw Signals (9x128)| 256-Dim Features (8 Qubits VQC) | **95.08%** | **0.9497** | **46.8 mins (2808s)** | **Completed.** 50-epoch multi-positive sample (M=4 views) pre-training + 30-epoch classical fine-tuning. Successfully learns representations without disturbing standard QCL code. |
+| **MPSQCL + LSTM (Ours, Frozen)** | Raw Signals (9x128) | None | **96.99%** | **0.9720** | **32.8s** | **Completed.** Frozen standard encoder (`HAREncoder`) + LSTM classifier head (100e). Outperforms baseline by +1.50% Acc. |
+| **MPSQCL + LSTM (Ours, Fine-tuned)** | Raw Signals (9x128) | None | **98.20%** | **0.9837** | **43.2s** | **Completed.** Pre-trained standard MPSQCL CNN encoder + LSTM jointly fine-tuned (100e) with equal LR. Outperforms baseline by +2.71% Acc. |
 
-### Multi-Dataset QCL & MPSQCL Results
+
+
+
+### Multi-Dataset QCL, MPSQCL, & LSTM Results
 
 | Model | Dataset | Test Accuracy | Macro F1 | Training Time | Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -95,13 +101,105 @@ The table below summarizes the performance of all evaluated models. Classical ba
 | **MPSQCL HAR (120e)** | MobiAct | **98.31%** | **0.9559** | 48.6 mins | Excluding falls, 9 ADL classes |
 | **MPSQCL HAR (150e)** | USC-HAD | **88.34%** | **0.8503** | 3.23 hours | Hardest dataset due to 12 activity classes |
 | **MPSQCL HAR (150e)** | SHAR | **83.52%** | **0.7524** | 1.26 hours | Layout scrambling bug fixed |
+| **MPSQCL HAR (150e)** | HHAR | **96.22%** | **0.9279** | 4.21 hours | 150-epoch pre-training (M=4) + 100-epoch fine-tuning |
 | **QCL HAR (120e)** | MotionSense | **95.79%** | **0.9596** | 25.8 mins | Standard QCL baseline |
 | **QCL HAR (120e)** | HHAR | **93.28%** | **0.8816** | 7.66 hours | Large dataset (224k windows) |
 | **QCL HAR (120e)** | MobiAct | **91.70%** | **0.8180** | 11.5 mins | Standard QCL baseline |
 | **QCL HAR (120e)** | SHAR | **91.06%** | **0.8667** | 2.28 hours | Standard QCL baseline |
 | **QCL HAR (120e)** | USC-HAD | **71.97%** | **0.7002** | ~25 mins | Standard QCL baseline |
+| **Classical LSTM (100e)** | UCI-HAR | **95.49%** | **0.9591** | 56.9s | Classical LSTM baseline with class balancing sampler |
+| **Classical LSTM (100e)** | SHAR | **76.09%** | **0.6992** | 50.2s | Classical LSTM baseline with class balancing sampler |
+| **Classical LSTM (100e)** | MotionSense | **98.47%** | **0.9788** | 93.1s | Classical LSTM baseline with class balancing sampler |
+| **Classical LSTM (100e)** | USC-HAD | **90.95%** | **0.8832** | 197.7s | Classical LSTM baseline with class balancing sampler |
+| **Classical LSTM (100e)** | MobiAct | **98.70%** | **0.9632** | 36.9s | Classical LSTM baseline with class balancing sampler |
+| **Classical LSTM (100e)** | HHAR | **99.32%** | **0.9865** | 16.3 mins | Classical LSTM baseline with class balancing sampler |
+| **MPSQCL + LSTM (Ours, Frozen, 100e)** | UCI-HAR | **96.99%** | **0.9720** | 32.8s | Pre-trained standard MPSQCL CNN encoder + LSTM classifier (frozen) |
+| **MPSQCL + LSTM (Ours, Fine-tuned, 100e)** | UCI-HAR | **98.20%** | **0.9837** | 43.2s | Pre-trained standard MPSQCL CNN encoder + LSTM classifier (unfrozen) |
 
-### Paper Reference Comparisons
+### Consolidated Parameter & Performance Benchmark
+
+The table below contrasts the classical LSTM baseline against the pre-trained hybrid MPSQCL + LSTM model across all 6 benchmark datasets. We compare sequence configurations, parameter divisions, classification metrics, and training runtimes (evaluated on a CUDA-capable system).
+
+| Dataset | Channels | Classes | Model | Encoder Params | Head Params | Total Params | Test Accuracy | Macro F1 | Training Time |
+| :--- | :---: | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **UCI-HAR** | 9 | 6 | Classical LSTM | - | 204,038 | 204,038 | 95.49% | 0.9591 | 56.9s |
+| | | | **MPSQCL + LSTM (Ours)** | **347,808** | **330,502** | **678,310** | **98.20%** | **0.9837** | **43.2s** |
+| **SHAR** | 3 | 17 | Classical LSTM | - | 202,385 | 202,385 | 76.09% | 0.6992 | 50.2s |
+| | | | **MPSQCL + LSTM (Ours)** | **346,272** | **331,921** | **678,193** | **94.65%** | **0.9151** | **37.4s** |
+| **HHAR** | 6 | 6 | Classical LSTM | - | 202,502 | 202,502 | **99.32%** | **0.9865** | 980.4s |
+| | | | **MPSQCL + LSTM (Ours)** | **347,040** | **330,502** | **677,542** | 98.64% | 0.9749 | **760.0s** |
+| **MotionSense** | 12 | 6 | Classical LSTM | - | 205,574 | 205,574 | 98.47% | 0.9788 | 93.1s |
+| | | | **MPSQCL + LSTM (Ours)** | **348,576** | **330,502** | **679,078** | **99.23%** | **0.9885** | **40.8s** |
+| **USC-HAD** | 6 | 12 | Classical LSTM | - | 203,276 | 203,276 | 90.95% | 0.8832 | 197.7s |
+| | | | **MPSQCL + LSTM (Ours)** | **347,040** | **331,276** | **678,316** | **93.43%** | **0.9083** | **98.7s** |
+| **MobiAct** | 6 | 9 | Classical LSTM | - | 202,889 | 202,889 | 98.70% | 0.9632 | 36.9s |
+| | | | **MPSQCL + LSTM (Ours)** | **347,040** | **330,889** | **677,929** | **99.62%** | **0.9889** | **28.9s** |
+
+
+
+
+
+### Detailed Comparison: Linear Head vs. LSTM Head (MPSQCL Ours)
+
+The table below directly contrasts the classical Linear classification head (used in standard MPSQCL fine-tuning) against our hybrid LSTM head across all 6 benchmark datasets. Both configurations use the standard unfrozen `HAREncoder` pre-trained under multi-positive quantum contrastive learning.
+
+| Dataset | Metric | MPSQCL (Ours) + Linear Head | MPSQCL (Ours) + LSTM Head | Difference ($\Delta$) | Head Params (Linear vs. LSTM) |
+| :--- | :--- | :---: | :---: | :---: | :---: |
+| **UCI-HAR** | Accuracy <br> Macro F1 <br> Time | **98.35%** <br> **0.9849** <br> **37.5s** | 98.20% <br> 0.9837 <br> 43.2s | -0.15% <br> -0.12% <br> +5.7s | **1,542** <br> vs. <br> 330,502 |
+| **SHAR** | Accuracy <br> Macro F1 <br> Time | 83.52% <br> 0.7524 <br> **29.3s** | **94.65%** <br> **0.9151** <br> 37.4s | **+11.13%** <br> **+16.27%** <br> +8.1s | **4,369** <br> vs. <br> 331,921 |
+| **HHAR** | Accuracy <br> Macro F1 <br> Time | 92.97% <br> 0.8725 <br> **143.5s** | **98.64%** <br> **0.9749** <br> 760.0s | **+5.67%** <br> **+10.24%** <br> +616.5s | **1,542** <br> vs. <br> 330,502 |
+| **MotionSense** | Accuracy <br> Macro F1 <br> Time | **99.69%** <br> **0.9954** <br> **30.1s** | 99.23% <br> 0.9885 <br> 40.8s | -0.46% <br> -0.69% <br> +10.7s | **1,542** <br> vs. <br> 330,502 |
+| **USC-HAD** | Accuracy <br> Macro F1 <br> Time | 88.34% <br> 0.8503 <br> **66.1s** | **93.43%** <br> **0.9083** <br> 98.7s | **+5.09%** <br> **+5.80%** <br> +32.6s | **3,084** <br> vs. <br> 331,276 |
+| **MobiAct** | Accuracy <br> Macro F1 <br> Time | 98.31% <br> 0.9559 <br> **22.8s** | **99.62%** <br> **0.9889** <br> 28.9s | **+1.31%** <br> **+3.30%** <br> +6.1s | **2,313** <br> vs. <br> 330,889 |
+
+### Comparison to Published SOTA Papers
+
+The hybrid MPSQCL + LSTM model is evaluated against the SOTA results from the two distinct source papers:
+
+#### 1. Published MPSQCL SOTA (Qproj, IEEE Globecom 2024)
+
+This paper proposed Multi-Positive Sample Quantum Contrastive Learning (MPSQCL) using a quantum projection head (**Qproj**). The table below contrasts the published Qproj results against our hybrid model:
+
+| Dataset | Published Qproj SOTA (Ren et al., 2024) | MPSQCL + LSTM (Ours) | Improvement ($\Delta$) |
+| :--- | :---: | :---: | :---: |
+| **UCI-HAR** | 94.13% | **98.20%** | **+4.07%** |
+| **HHAR** | 94.83% | **98.64%** | **+3.81%** |
+| **MotionSense** | 98.19% | **99.23%** | **+1.04%** |
+| **USC-HAD** | 91.66% | **93.43%** | **+1.77%** |
+
+#### 2. Published QCL SOTA (QCLHAR, Smart Health 2025)
+
+This paper proposed standard Quantum Contrastive Learning (QCL) for HAR (**QCLHAR**). The table below contrasts the published QCLHAR results against our hybrid model:
+
+| Dataset | Published QCLHAR SOTA (Ren et al., 2025) | MPSQCL + LSTM (Ours) | Improvement ($\Delta$) |
+| :--- | :---: | :---: | :---: |
+| **UCI-HAR** | 94.13% | **98.20%** | **+4.07%** |
+| **SHAR** | 86.18% | **94.65%** | **+8.47%** |
+| **HHAR** | 94.83% | **98.64%** | **+3.81%** |
+| **MotionSense** | 99.10% | **99.23%** | **+0.13%** |
+| **USC-HAD** | 91.66% | **93.43%** | **+1.77%** |
+| **MobiAct** | 99.07% | **99.62%** | **+0.55%** |
+
+
+### Dataset Processing Differences from Source Papers
+
+Upon cross-referencing the dataset configuration in our codebase against the published text files in the `papers/` directory, we identified two specific discrepancies in channel dimensions and class structures:
+
+1. **MotionSense Channel Count (12 channels vs. 3 channels)**:
+   * **Our Codebase:** We extract **12 channels** representing raw sensor readings (attitude pitch/roll/yaw, gravity x/y/z, rotation rate x/y/z, and user acceleration x/y/z).
+   * **Globecom 2024 (MPSQCL) Paper:** Section IV.A.1 explicitly states: *"This paper uses the signals from the three-axis accelerometer sensor."* (i.e. **3 channels**). This higher input channel count in our codebase provides our model with attitude and gyroscopic data, which explains our superior classification baseline (98.47% vs. paper's SimCLR 97.85%).
+
+2. **MobiAct Class Count (9 classes vs. 11 classes)**:
+   * **Our Codebase:** Our preprocessing script (`preprocess_mobiact`) parses only **9 classes** (STD, WAL, JOG, JUM, STU, STN, SCH, CSI, CSO), which map to indices 0–8, excluding fall classes and car step-in/out.
+   * **Smart Health 2025 (QCLHAR) Paper:** Table 2 in the paper lists **11 classes** (indices 0–10), which includes *9: car step-in* and *10: car step-out*. Both codebase and paper utilize the same **6 channels** (accelerometer + gyroscope).
+
+3. **Other Datasets (UCI-HAR, SHAR, HHAR, USC-HAD)**:
+   * **UCI-HAR:** Exactly matches (9 channels, 6 classes, window size 128, 50% overlap).
+   * **SHAR (UniMiB SHAR):** Exactly matches (3 channels, 17 classes, window size 151, 10 out of 30 subjects with incomplete classes excluded).
+   * **HHAR:** Exactly matches (6 channels, 6 classes, window size 100, downsampled to 50 Hz, smartphone only).
+   * **USC-HAD:** Exactly matches (6 channels, 12 classes, window size 250, 100 Hz sampling).
+
+### Paper Reference Comparisons (UCI-HAR)
 
 | Model | Source | Test Accuracy | Macro F1 |
 | :--- | :--- | :--- | :--- |
@@ -175,3 +273,21 @@ python experiments/run_mpsqcl_har.py --phase pretrain --dataset ucihar --epochs 
 # Phase 2: Supervised fine-tuning
 python experiments/run_mpsqcl_har.py --phase finetune --dataset ucihar --epochs 100 --checkpoint results/mpsqcl_encoder_pretrained_ucihar.pt
 ```
+
+### 4. Classical LSTM Baseline
+Train and evaluate the classical LSTM classifier baseline:
+```bash
+python experiments/run_lstm_baseline.py --dataset ucihar --epochs 100 --batch_size 128
+```
+
+### 5. MPSQCL Encoder + LSTM Classifier
+Train and evaluate the hybrid pre-trained MPSQCL CNN encoder + LSTM classifier:
+```bash
+# Fine-tune the pre-trained MPSQCL encoder jointly with the LSTM (Recommended)
+python experiments/run_mpsqcl_lstm.py --dataset ucihar --epochs 50 --batch_size 128 --freeze_encoder False
+
+# Evaluate with frozen pre-trained encoder (feature extraction only)
+python experiments/run_mpsqcl_lstm.py --dataset ucihar --epochs 50 --batch_size 128 --freeze_encoder True
+```
+
+

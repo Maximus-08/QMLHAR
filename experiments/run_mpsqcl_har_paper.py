@@ -26,9 +26,9 @@ import numpy as np
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.data.har_datasets_paper import get_paper_dataloaders
-from src.data.augmentations_paper import ContrastiveViewGeneratorPaper
-from src.models.encoder_paper import HAREncoderPaper
-from src.models.quantum_head_paper import QuantumProjectionHeadPaper
+from src.data.augmentations import ContrastiveViewGeneratorPaper
+from src.models.encoder import HAREncoderPaper
+from src.models.quantum_head import QuantumProjectionHeadPaper
 from src.losses.mpsqcl_loss import MPSQCLLoss
 
 
@@ -51,10 +51,6 @@ def mps_contrastive_collate_fn(batch):
 # Phase 1: MPSQCL Pre-Training with Validation Loop
 # ============================================================
 def pretrain(args):
-    print("=" * 60)
-    print(f"MPSQCL HAR Paper Version — Phase 1: Pre-Training ({args.n_views} views)")
-    print("=" * 60)
-
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
 
@@ -63,10 +59,16 @@ def pretrain(args):
     np.random.seed(args.seed)
 
     # Load dataset splits (64/16/20) with multiple views
+    transform = ContrastiveViewGeneratorPaper(n_views=args.n_views, dataset_name=args.dataset)
+    args.n_views = transform.n_views
+
+    print("=" * 60)
+    print(f"MPSQCL HAR Paper Version — Phase 1: Pre-Training ({args.n_views} views)")
+    print("=" * 60)
+
     print(
-        f"\nLoading dataset '{args.dataset}' with {args.n_views} augmented views (resample/negate)..."
+        f"\nLoading dataset '{args.dataset}' with {args.n_views} optimal paper-compliant augmented views..."
     )
-    transform = ContrastiveViewGeneratorPaper(n_views=args.n_views)
 
     train_loader, val_loader, _, in_channels, _, _ = get_paper_dataloaders(
         dataset_name=args.dataset,
@@ -109,11 +111,28 @@ def pretrain(args):
 
     all_params = list(encoder.parameters()) + list(quantum_head.parameters())
     optimizer = optim.Adam(all_params, lr=lr, weight_decay=1e-5)
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
 
-    # Training Loop
+    # Resume from checkpoint if provided
     start_epoch = 0
     best_val_loss = float("inf")
+    if args.checkpoint and os.path.exists(args.checkpoint):
+        print(f"\nResuming from checkpoint: {args.checkpoint}")
+        ckpt = torch.load(args.checkpoint, map_location=device)
+        encoder.load_state_dict(ckpt["encoder"])
+        quantum_head.load_state_dict(ckpt["quantum_head"])
+        optimizer.load_state_dict(ckpt["optimizer"])
+        start_epoch = ckpt.get("epoch", 0)
+        best_val_loss = ckpt.get("best_val_loss", ckpt.get("val_loss", float("inf")))
+        # Reset learning rates to lr so CosineAnnealingLR initializes base_lrs correctly
+        for g in optimizer.param_groups:
+            g["lr"] = lr
+        print(f"Resumed from epoch {start_epoch} with best_val_loss {best_val_loss:.4f}")
+
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, T_max=args.epochs, last_epoch=start_epoch - 1 if start_epoch > 0 else -1
+    )
+
+    # Training Loop
     history = {
         "epoch": [],
         "train_loss": [],
@@ -468,7 +487,10 @@ def main():
         "--phase", type=str, required=True, choices=["pretrain", "finetune"]
     )
     parser.add_argument(
-        "--dataset", type=str, default="ucihar", choices=["ucihar", "shar", "hhar"]
+        "--dataset",
+        type=str,
+        default="ucihar",
+        choices=["ucihar", "shar", "hhar", "motionsense", "uschad", "mobiact", "opportunity", "opportunity_gestures"],
     )
     parser.add_argument("--data_dir", type=str, default=default_data_dir)
     parser.add_argument("--epochs", type=int, default=120)
