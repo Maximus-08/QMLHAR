@@ -47,7 +47,7 @@
 | **Classical LSTM (MobiAct)** | Raw Signals (6x128) | None | **98.70%** | **0.9632** | **36.9s** | Classical LSTM baseline (100e) with class balancing sampler. |
 | **MPSQCL + LSTM (MobiAct)** | Pre-trained CNN + LSTM | None | **99.62%** | **0.9889** | **28.9s** | **Completed.** Jointly fine-tuned standard encoder + LSTM (100e). Beats baseline by **+0.92% Acc**. |
 | **Classical LSTM (HHAR)** | Raw Signals (6x100) | None | **99.32%** | **0.9865** | **16.3 mins** | Classical LSTM baseline (100e) with class balancing sampler. |
-| **MPSQCL + LSTM (HHAR)** | Pre-trained CNN + LSTM | None | **98.64%** | **0.9749** | **12.7 mins** | **Completed.** Jointly fine-tuned standard encoder + LSTM (80e). Within 0.68% of baseline while saving training time. |
+| **MPSQCL + LSTM (HHAR)** | Pre-trained CNN + LSTM | None | **98.88%** | **0.9791** | **15.0 mins** | **Completed.** Jointly fine-tuned standard encoder + LSTM (100e). Within 0.44% of baseline while saving training time. |
 | **MPSQCL + LSTM (Opportunity)** | Pre-trained CNN + LSTM | None | **91.05%** | **0.9272** | **415.0s** | **Completed.** Jointly fine-tuned standard encoder + LSTM (50e). |
 | **MPSQCL + LSTM (Opportunity Gestures)** | Pre-trained CNN + LSTM | None | **71.64%** | **0.5382** | **507.1s** | **Completed.** Jointly fine-tuned standard encoder + LSTM (50e). |
 
@@ -62,7 +62,7 @@ The table below contrasts the classical LSTM baseline against the pre-trained hy
 | **SHAR** | 3 | 17 | Classical LSTM | - | 202,385 | 202,385 | 76.09% | 0.6992 | 50.2s |
 | | | | **MPSQCL + LSTM (Ours)** | **346,272** | **331,921** | **678,193** | **94.65%** | **0.9151** | **37.4s** |
 | **HHAR** | 6 | 6 | Classical LSTM | - | 202,502 | 202,502 | **99.32%** | **0.9865** | 980.4s |
-| | | | **MPSQCL + LSTM (Ours)** | **347,040** | **330,502** | **677,542** | 98.64% | 0.9749 | **760.0s** |
+| | | | **MPSQCL + LSTM (Ours)** | **347,040** | **330,502** | **677,542** | **98.88%** | **0.9791** | **901.6s** |
 | **MotionSense** | 12 | 6 | Classical LSTM | - | 205,574 | 205,574 | 98.47% | 0.9788 | 93.1s |
 | | | | **MPSQCL + LSTM (Ours)** | **348,576** | **330,502** | **679,078** | **99.23%** | **0.9885** | **40.8s** |
 | **USC-HAD** | 6 | 12 | Classical LSTM | - | 203,276 | 203,276 | 90.95% | 0.8832 | 197.7s |
@@ -82,7 +82,7 @@ The table below directly contrasts the classical Linear classification head (use
 | :--- | :--- | :---: | :---: | :---: | :---: |
 | **UCI-HAR** | Accuracy <br> Macro F1 <br> Time | **98.35%** <br> **0.9849** <br> **37.5s** | 98.20% <br> 0.9837 <br> 43.2s | -0.15% <br> -0.12% <br> +5.7s | **1,542** <br> vs. <br> 330,502 |
 | **SHAR** | Accuracy <br> Macro F1 <br> Time | 83.52% <br> 0.7524 <br> **29.3s** | **94.65%** <br> **0.9151** <br> 37.4s | **+11.13%** <br> **+16.27%** <br> +8.1s | **4,369** <br> vs. <br> 331,921 |
-| **HHAR** | Accuracy <br> Macro F1 <br> Time | 92.97% <br> 0.8725 <br> **143.5s** | **98.64%** <br> **0.9749** <br> 760.0s | **+5.67%** <br> **+10.24%** <br> +616.5s | **1,542** <br> vs. <br> 330,502 |
+| **HHAR** | Accuracy <br> Macro F1 <br> Time | 92.97% <br> 0.8725 <br> **143.5s** | **98.88%** <br> **0.9791** <br> 901.6s | **+5.91%** <br> **+10.66%** <br> +758.1s | **1,542** <br> vs. <br> 330,502 |
 | **MotionSense** | Accuracy <br> Macro F1 <br> Time | **99.69%** <br> **0.9954** <br> **30.1s** | 99.23% <br> 0.9885 <br> 40.8s | -0.46% <br> -0.69% <br> +10.7s | **1,542** <br> vs. <br> 330,502 |
 | **USC-HAD** | Accuracy <br> Macro F1 <br> Time | 88.34% <br> 0.8503 <br> **66.1s** | **93.43%** <br> **0.9083** <br> 98.7s | **+5.09%** <br> **+5.80%** <br> +32.6s | **3,084** <br> vs. <br> 331,276 |
 | **MobiAct** | Accuracy <br> Macro F1 <br> Time | 98.31% <br> 0.9559 <br> **22.8s** | **99.62%** <br> **0.9889** <br> 28.9s | **+1.31%** <br> **+3.30%** <br> +6.1s | **2,313** <br> vs. <br> 330,889 |
@@ -90,7 +90,7 @@ The table below directly contrasts the classical Linear classification head (use
 ### Decisional Rationale & Trade-offs
 1. **Temporal Modeling:** Global pooling collapses the sequence dimension, which degrades performance on datasets with high activity-to-activity drift or long sequential dependencies (such as SHAR, USC-HAD, and HHAR). The LSTM head models temporal sequences sequentially (`use_pool=False`), yielding accuracy improvements up to **+11.13%** (SHAR) and **+5.67%** (HHAR).
 2. **Parametric Efficiency:** The linear classifier requires only $256 \times C + C$ parameters (between 1.5k and 4.3k), whereas the LSTM head adds **~330k parameters**.
-3. **Execution Overhead:** Because the LSTM processes sequence frames step-by-step, it scales execution times significantly on large datasets. On HHAR (~224k windows), fine-tuning the LSTM head takes **760.0s** compared to just **143.5s** for the linear head.
+3. **Execution Overhead:** Because the LSTM processes sequence frames step-by-step, it scales execution times significantly on large datasets. On HHAR (~224k windows), fine-tuning the LSTM head takes **901.6s** compared to just **143.5s** for the linear head.
 4. **Regularization Effect:** On simple, highly linearly separable datasets like UCI-HAR and MotionSense, the low-capacity linear head acts as a regularizer, slightly outperforming the LSTM head (by 0.15% to 0.46%).
 
 ---

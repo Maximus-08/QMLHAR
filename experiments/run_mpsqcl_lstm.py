@@ -169,7 +169,9 @@ def train_eval_mpsqcl_lstm(args):
 
     # Output file paths
     checkpoint_suffix = ""
-    if args.checkpoint and "depth2" in args.checkpoint:
+    if args.checkpoint and "se_depth1" in args.checkpoint:
+        checkpoint_suffix = "_se_depth1"
+    elif args.checkpoint and "depth2" in args.checkpoint:
         checkpoint_suffix = "_depth2"
     elif args.checkpoint and "depth1" in args.checkpoint:
         checkpoint_suffix = "_depth1"
@@ -326,7 +328,9 @@ def train_eval_mpsqcl_lstm(args):
 
     # Save results to a log file
     suffix = ""
-    if args.checkpoint and "depth2" in args.checkpoint:
+    if args.checkpoint and "se_depth1" in args.checkpoint:
+        suffix = "_se_depth1"
+    elif args.checkpoint and "depth2" in args.checkpoint:
         suffix = "_depth2"
     elif args.checkpoint and "depth1" in args.checkpoint:
         suffix = "_depth1"

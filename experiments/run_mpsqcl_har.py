@@ -233,7 +233,12 @@ def pretrain(args):
 
         # Save checkpoint every N epochs
         if (epoch + 1) % args.save_every == 0 or (epoch + 1) == args.epochs:
-            ckpt_prefix = f"mpsqcl_checkpoint_depth{args.q_layers}" if args.q_layers != 3 else "mpsqcl_checkpoint"
+            if args.q_layers == 1:
+                ckpt_prefix = "mpsqcl_checkpoint_depth1" if args.use_paper_head else "mpsqcl_checkpoint_se_depth1"
+            elif args.q_layers != 3:
+                ckpt_prefix = f"mpsqcl_checkpoint_depth{args.q_layers}"
+            else:
+                ckpt_prefix = "mpsqcl_checkpoint"
             ckpt_path = os.path.join(
                 os.path.dirname(args.output_file),
                 f"{ckpt_prefix}_epoch{epoch + 1}_{args.dataset}.pt",
@@ -257,7 +262,12 @@ def pretrain(args):
     )
 
     # Save final encoder weights (for fine-tuning)
-    encoder_prefix = f"mpsqcl_encoder_pretrained_depth{args.q_layers}" if args.q_layers != 3 else "mpsqcl_encoder_pretrained"
+    if args.q_layers == 1:
+        encoder_prefix = "mpsqcl_encoder_pretrained_depth1" if args.use_paper_head else "mpsqcl_encoder_pretrained_se_depth1"
+    elif args.q_layers != 3:
+        encoder_prefix = f"mpsqcl_encoder_pretrained_depth{args.q_layers}"
+    else:
+        encoder_prefix = "mpsqcl_encoder_pretrained"
     encoder_path = os.path.join(
         os.path.dirname(args.output_file),
         f"{encoder_prefix}_{args.dataset}.pt",

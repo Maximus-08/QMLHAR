@@ -35,6 +35,7 @@ __pycache__/
 # System files
 .DS_Store
 *.Zone.Identifier
+*:Zone.Identifier*
 
 # Research Paper documents
 /MPSQCL LSTM Research paper.md
@@ -59,6 +60,8 @@ __pycache__/
 # Local checkpoints and logs
 /opportunity_notebook1/
 *.log
+gestures_pretrain_kaggle
+logs_opportunity_kaggle
 
 # Scratch plots and code files
 /image.png
@@ -67,8 +70,10 @@ __pycache__/
 # Experiment results markdown
 mpsqcl_ablation_results_*.md
 mpsqcl_candidates_results_*.md
+mpsqcl_views_ablation_results*.md
 mpsqcl_lstm_candidates_shar_results.md
 
 # Kaggle Notebooks
-qmlhar_kaggle_finetuning.ipynb
-qmlhar_kaggle_training.ipynb
+qmlhar_kaggle_*.ipynb
+*.ipynb
+

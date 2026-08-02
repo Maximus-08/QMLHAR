@@ -23,11 +23,16 @@ This repository explores the application of Quantum Machine Learning (QML) model
 - `experiments/`
   - `run_qcl_har.py` / `run_qcl_har_paper.py`: Standard and paper-compliant Quantum Contrastive Learning pipelines (2-view pre-training + supervised fine-tuning).
   - `run_mpsqcl_har.py` / `run_mpsqcl_har_paper.py`: Standard and paper-compliant Multi-Positive Sample QCL pipelines (M-view pre-training + supervised fine-tuning).
-  - `run_pipeline_mpsqcl.py`: Automated pipeline runner for sequentially executing MPSQCL across all 6 datasets with checkpoint resume support.
-- `results/`: Saved metrics, training logs, pre-training/fine-tuning history, model checkpoints, and confusion matrices.
+  - `run_mpsqcl_lstm.py`: Hybrid pre-trained MPSQCL CNN encoder + LSTM classifier pipeline.
+  - `run_lstm_baseline.py`: Standalone classical LSTM sequence model baseline.
+  - `run_mpsqcl_ablation.py`: Pipeline component ablation study runner.
+  - `run_mpsqcl_views_ablation.py`: Multi-view count ($M \in \{2, 3, 4, 5, 6\}$) ablation study runner.
+  - `run_pipeline.py` / `run_pipeline_mpsqcl.py`: Automated pipeline runners for sequentially executing MPSQCL across all datasets.
+- `results/`: Saved metrics, training logs, pre-training/fine-tuning history, model checkpoints, and ablation study reports (`mpsqcl_ablation_results.md`, `mpsqcl_views_ablation_results.md`).
 - `qclimplementation.md`: Detailed implementation specification for the QCL architecture.
 - `mpsqclimplementation.md`: Detailed implementation specification for the MPSQCL architecture.
-- `report.md`: Full results table with all model evaluations across datasets.
+- `master_results.md`: Consolidated master experimental results across all datasets, ablation studies, and baselines.
+- `report.md`: Full benchmark comparison report across evaluated HAR datasets.
 
 ---
 
@@ -127,7 +132,7 @@ The table below contrasts the classical LSTM baseline against the pre-trained hy
 | **SHAR** | 3 | 17 | Classical LSTM | - | 202,385 | 202,385 | 76.09% | 0.6992 | 50.2s |
 | | | | **MPSQCL + LSTM (Ours)** | **346,272** | **331,921** | **678,193** | **94.65%** | **0.9151** | **37.4s** |
 | **HHAR** | 6 | 6 | Classical LSTM | - | 202,502 | 202,502 | **99.32%** | **0.9865** | 980.4s |
-| | | | **MPSQCL + LSTM (Ours)** | **347,040** | **330,502** | **677,542** | 98.64% | 0.9749 | **760.0s** |
+| | | | **MPSQCL + LSTM (Ours)** | **347,040** | **330,502** | **677,542** | **98.88%** | **0.9791** | **901.6s** |
 | **MotionSense** | 12 | 6 | Classical LSTM | - | 205,574 | 205,574 | 98.47% | 0.9788 | 93.1s |
 | | | | **MPSQCL + LSTM (Ours)** | **348,576** | **330,502** | **679,078** | **99.23%** | **0.9885** | **40.8s** |
 | **USC-HAD** | 6 | 12 | Classical LSTM | - | 203,276 | 203,276 | 90.95% | 0.8832 | 197.7s |
@@ -147,7 +152,7 @@ The table below directly contrasts the classical Linear classification head (use
 | :--- | :--- | :---: | :---: | :---: | :---: |
 | **UCI-HAR** | Accuracy <br> Macro F1 <br> Time | **98.35%** <br> **0.9849** <br> **37.5s** | 98.20% <br> 0.9837 <br> 43.2s | -0.15% <br> -0.12% <br> +5.7s | **1,542** <br> vs. <br> 330,502 |
 | **SHAR** | Accuracy <br> Macro F1 <br> Time | 83.52% <br> 0.7524 <br> **29.3s** | **94.65%** <br> **0.9151** <br> 37.4s | **+11.13%** <br> **+16.27%** <br> +8.1s | **4,369** <br> vs. <br> 331,921 |
-| **HHAR** | Accuracy <br> Macro F1 <br> Time | 92.97% <br> 0.8725 <br> **143.5s** | **98.64%** <br> **0.9749** <br> 760.0s | **+5.67%** <br> **+10.24%** <br> +616.5s | **1,542** <br> vs. <br> 330,502 |
+| **HHAR** | Accuracy <br> Macro F1 <br> Time | 92.97% <br> 0.8725 <br> **143.5s** | **98.88%** <br> **0.9791** <br> 901.6s | **+5.91%** <br> **+10.66%** <br> +758.1s | **1,542** <br> vs. <br> 330,502 |
 | **MotionSense** | Accuracy <br> Macro F1 <br> Time | **99.69%** <br> **0.9954** <br> **30.1s** | 99.23% <br> 0.9885 <br> 40.8s | -0.46% <br> -0.69% <br> +10.7s | **1,542** <br> vs. <br> 330,502 |
 | **USC-HAD** | Accuracy <br> Macro F1 <br> Time | 88.34% <br> 0.8503 <br> **66.1s** | **93.43%** <br> **0.9083** <br> 98.7s | **+5.09%** <br> **+5.80%** <br> +32.6s | **3,084** <br> vs. <br> 331,276 |
 | **MobiAct** | Accuracy <br> Macro F1 <br> Time | 98.31% <br> 0.9559 <br> **22.8s** | **99.62%** <br> **0.9889** <br> 28.9s | **+1.31%** <br> **+3.30%** <br> +6.1s | **2,313** <br> vs. <br> 330,889 |
@@ -207,6 +212,32 @@ Upon cross-referencing the dataset configuration in our codebase against the pub
 | **MPSCL (M=4, classical head)** | Paper | **97.50%** | **0.9745** |
 | **TS-TCC (classical SOTA)** | Paper | **96.41%** | **0.9635** |
 | **QSSL (VQC in encoder)** | Paper | **83.59%** | **0.8351** |
+
+---
+
+## Ablation Studies & Architectural Trade-offs
+
+### 1. Pipeline Component Ablation Study (UCI-HAR, 20% Subset, 20 Pre-train / 20 Fine-tune Epochs)
+
+The table below evaluates individual component modifications against the strict paper-compliant baseline under controlled settings:
+
+| Configuration | Pre-train Val Loss | Test Accuracy | Test Macro F1 | Delta F1 vs. Paper Baseline | Key Takeaway / Insight |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **Config 0: Paper Baseline** | 3.8601 | 83.16% | 0.8292 | - | Default 2-view, frozen encoder, depth-1 Ry+CNOT VQC, max pooling. |
+| **Config 1: Unfrozen Encoder** | 3.5746 | 76.52% | 0.7522 | -7.70% | Unfreezing 348k params in short runs (20e) overfits; stable on 100e+ runs. |
+| **Config 2: Deeper VQC (D=3)** | 3.6691 | 86.12% | 0.8584 | +2.92% | StronglyEntangling VQC ($D=3$) increases representation mapping capacity. |
+| **Config 3: Average Pooling** | 3.8858 | 84.76% | 0.8452 | +1.60% | Avg pooling preserves global temporal context better than max pooling. |
+| **Config 4: 11-Augmentations** | 3.6292 | 86.07% | 0.8544 | +2.52% | Broader augmentation pool prevents encoder shortcut learning. |
+| **Config 5: Unweighted Sampler**| 3.8166 | 86.66% | 0.8620 | +3.28% | Balanced datasets (UCI-HAR) perform better without oversampling. |
+| **Config 6: No Feature L2-Norm** | 4.0917 | 85.88% | 0.8535 | +2.43% | Preserves magnitude/scale information for downstream classification. |
+| **Config 7: Standard Pipeline** | 3.3437 | **89.67%** | **0.8911** | **+6.20%** | **Combined optimizations yield best performance overall (+6.20% F1).** |
+
+### 2. Multi-View Count ($M$) Ablation Study
+
+*The multi-view ablation sweep across $M \in \{2, 3, 4, 5, 6\}$ is currently executing live on GPU (`task-123`). Results will be compiled automatically in `results/mpsqcl_views_ablation_results.md` upon completion.*
+
+- **$M = 2$ Views (Completed)**: Pre-train Val Loss: **2.4372** | Test Acc: **87.19%** | Test Macro F1: **0.8654** | Pre-train Time: **110.4s** (5.52s/epoch)
+- **$M = 3, 4, 5, 6$**: Currently running...
 
 ---
 
@@ -288,6 +319,17 @@ python experiments/run_mpsqcl_lstm.py --dataset ucihar --epochs 50 --batch_size 
 
 # Evaluate with frozen pre-trained encoder (feature extraction only)
 python experiments/run_mpsqcl_lstm.py --dataset ucihar --epochs 50 --batch_size 128 --freeze_encoder True
+```
+
+### 6. Pipeline Component & View Ablation Studies
+Run component ablation study:
+```bash
+./.venv/bin/python experiments/run_mpsqcl_ablation.py --subset_fraction 0.2 --epochs_pretrain 20 --epochs_finetune 20
+```
+
+Run number of views ($M \in \{2, 3, 4, 5, 6\}$) ablation study:
+```bash
+./.venv/bin/python experiments/run_mpsqcl_views_ablation.py --dataset ucihar --subset_fraction 0.2 --epochs_pretrain 20 --epochs_finetune 20 --views 2 3 4 5 6
 ```
 
 

@@ -73,7 +73,10 @@ def run_dataset_pipeline(dataset, args, results_dir):
 
     # Checkpoint prefix and final path naming
     is_depth_nonstandard = (args.q_layers != 3) or args.use_paper_head
-    depth_str = f"depth{args.q_layers}"
+    if args.q_layers == 1:
+        depth_str = "depth1" if args.use_paper_head else "se_depth1"
+    else:
+        depth_str = f"depth{args.q_layers}"
     
     if is_depth_nonstandard:
         final_pretrained_path = os.path.join(

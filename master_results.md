@@ -58,14 +58,14 @@ Comparison of our proposed classical-quantum framework (with both Linear and LST
 
 | Dataset | Published SOTA QCLHAR (2025) <br> [Macro F1] | Published SOTA MPSQCL (2024) <br> [Accuracy] | Ours: Linear Head <br> [Acc / Macro F1] | Ours: LSTM Head <br> [Acc / Macro F1] | Improvement <br> [$\Delta$ F1 vs. QCLHAR] |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **UCI-HAR** | 94.13% | 94.13% | 98.40% / 0.9854 | **98.50% / 0.9864** | **+4.51%** |
-| **SHAR** | 86.18% | — | 83.52% / 0.7524 | **94.65% / 0.9151** | **+5.33%** |
-| **HHAR** | 94.83% | 94.83% | 96.28% / 0.9318 | **98.68% / 0.9756** | **+2.73%** |
-| **MotionSense** | 99.10% | 98.19% | **99.69% / 0.9954** | 99.23% / 0.9885 | **+0.44%** |
+| **UCI-HAR** | 94.13% | 94.13% | 98.40% / 0.9854 | **98.79% / 0.9890** | **+4.77%** |
+| **SHAR** | 86.18% | — | 83.52% / 0.7549 | **94.77% / 0.9227** | **+6.09%** |
+| **HHAR** | 94.83% | 94.83% | 96.46% / 0.9320 | **99.06% / 0.9823** | **+3.40%** |
+| **MotionSense** | 99.10% | 98.19% | 99.69% / 0.9954 | **99.85% / 0.9977** | **+1.58%** |
 | **USC-HAD** | 91.66% | 91.66% | 88.36% / 0.8506 | **93.43% / 0.9083** | **-0.83%** |
 | **MobiAct** | 99.07% | — | 98.31% / 0.9559 | **99.62% / 0.9893** | **-0.14%** |
-| **Opp. Locomotion**| — | — | — | **92.31% / 0.9384** | — |
-| **Opp. Gestures** | — | — | — | **85.16% / 0.6849** | — |
+| **Opp. Locomotion**| — | — | 90.37% / 0.9190 | **92.31% / 0.9384** | — |
+| **Opp. Gestures** | — | — | 74.77% / 0.5209 | **85.16% / 0.6849** | — |
 
 ---
 
@@ -73,14 +73,14 @@ Comparison of our proposed classical-quantum framework (with both Linear and LST
 
 Pre-training configurations sweeps across VQC depths 1, 2, and 3 Strongly Entangling VQCs compared to Depth-1 paper-compliant custom heads (Ry+CNOT). All configurations are fine-tuned using an unfrozen, slowly adapted encoder.
 
-| Dataset | Classifier Head | Depth-1 VQC (Ry+CNOT) | Depth-2 StronglyEntangling | Depth-3 StronglyEntangling |
-| :--- | :--- | :---: | :---: | :---: |
-| **UCI-HAR** | Linear Head <br> LSTM Head | **98.40% / 0.9854** <br> 98.50% / 0.9863 | 98.30% / 0.9845 <br> **98.50% / 0.9864** | 98.35% / 0.9849 <br> 98.20% / 0.9837 |
-| **SHAR** | Linear Head <br> LSTM Head | 83.52% / 0.7515 <br> 94.40% / 0.9183 | 83.15% / 0.7421 <br> 93.98% / 0.9130 | **83.52% / 0.7524** <br> **94.65% / 0.9151** |
-| **HHAR** | Linear Head <br> LSTM Head | 94.95% / 0.9049 <br> 98.12% / 0.9653 | **96.28% / 0.9318** <br> **98.68% / 0.9756** | 96.22% / 0.9279 <br> 98.64% / 0.9749 |
-| **MotionSense** | Linear Head <br> LSTM Head | 99.62% / 0.9945 <br> 99.16% / 0.9896 | 99.62% / 0.9939 <br> 99.08% / 0.9866 | **99.69% / 0.9954** <br> **99.23% / 0.9885** |
-| **USC-HAD** | Linear Head <br> LSTM Head | **88.36% / 0.8506** <br> 92.92% / 0.9020 | 85.67% / 0.8159 <br> 93.27% / 0.9070 | 88.34% / 0.8503 <br> **93.43% / 0.9083** |
-| **MobiAct** | Linear Head <br> LSTM Head | **98.31% / 0.9559** <br> 99.54% / 0.9838 | 97.77% / 0.9455 <br> **99.62% / 0.9893** | **98.31% / 0.9559** <br> 99.62% / 0.9889 |
+| Dataset | Classifier Head | Depth-1 VQC (Ry+CNOT) | Depth-1 StronglyEntangling | Depth-2 StronglyEntangling | Depth-3 StronglyEntangling |
+| :--- | :--- | :---: | :---: | :---: | :---: |
+| **UCI-HAR** | Linear Head <br> LSTM Head | 98.40% / 0.9854 <br> 98.50% / 0.9863 | 98.35% / 0.9850 <br> **98.79% / 0.9890** | 98.30% / 0.9845 <br> 98.50% / 0.9864 | 98.35% / 0.9849 <br> 98.20% / 0.9837 |
+| **SHAR** | Linear Head <br> LSTM Head | 83.52% / 0.7515 <br> 94.40% / 0.9183 | 83.52% / 0.7549 <br> 94.77% / 0.9227 | 83.15% / 0.7421 <br> 93.98% / 0.9130 | **83.52% / 0.7524** <br> **94.65% / 0.9151** |
+| **HHAR** | Linear Head <br> LSTM Head | 94.95% / 0.9049 <br> 98.12% / 0.9653 | **96.46% / 0.9320** <br> **99.06% / 0.9823** | 96.28% / 0.9318 <br> 98.68% / 0.9756 | 96.22% / 0.9279 <br> 98.88% / 0.9791 |
+| **MotionSense** | Linear Head <br> LSTM Head | 99.62% / 0.9945 <br> 99.16% / 0.9896 | 99.54% / 0.9926 <br> **99.85% / 0.9977** | 99.62% / 0.9939 <br> 99.08% / 0.9866 | **99.69% / 0.9954** <br> 99.23% / 0.9885 |
+| **USC-HAD** | Linear Head <br> LSTM Head | **88.36% / 0.8506** <br> 92.92% / 0.9020 | 83.24% / 0.8259 <br> 93.15% / 0.9052 | 85.67% / 0.8159 <br> 93.27% / 0.9070 | 88.34% / 0.8503 <br> **93.43% / 0.9083** |
+| **MobiAct** | Linear Head <br> LSTM Head | **98.31% / 0.9559** <br> 99.54% / 0.9838 | 97.16% / 0.9334 <br> 99.69% / 0.9874 | 97.77% / 0.9455 <br> **99.62% / 0.9893** | **98.31% / 0.9559** <br> 99.62% / 0.9889 |
 
 ### 4.1 Pre-Training Runtime Efficiencies (Depth-1 vs. Depth-2 vs. Depth-3)
 Runtimes measured during 150 epochs of pre-training. Depth-1 custom Ry-CNOT circuit yields massive runtime benefits with minimal accuracy decay.
@@ -129,12 +129,12 @@ Contrasts the standalone classical LSTM sequence model against our pre-trained h
 
 | Dataset | Model | Encoder Params | Head Params | Total Params | Test Accuracy | Macro F1 | Training Time |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **UCI-HAR** | Classical LSTM <br> **MPSQCL + LSTM (Ours)** | — <br> **347,808** | 204,038 <br> **330,502** | 204,038 <br> **678,310** | 95.49% <br> **98.20%** | 0.9591 <br> **0.9837** | 56.9s <br> **43.2s** |
-| **SHAR** | Classical LSTM <br> **MPSQCL + LSTM (Ours)** | — <br> **346,272** | 202,385 <br> **331,921** | 202,385 <br> **678,193** | 76.09% <br> **94.65%** | 0.6992 <br> **0.9151** | 50.2s <br> **37.4s** |
-| **HHAR** | Classical LSTM <br> **MPSQCL + LSTM (Ours)** | — <br> **347,040** | 202,502 <br> **330,502** | 202,502 <br> **677,542** | **99.32%** <br> 98.64% | **0.9865** <br> 0.9749 | 980.4s <br> **760.0s** |
-| **MotionSense**| Classical LSTM <br> **MPSQCL + LSTM (Ours)** | — <br> **348,576** | 205,574 <br> **330,502** | 205,574 <br> **679,078** | 98.47% <br> **99.23%** | 0.9788 <br> **0.9885** | 93.1s <br> **40.8s** |
+| **UCI-HAR** | Classical LSTM <br> **MPSQCL + LSTM (Ours)** | — <br> **347,808** | 204,038 <br> **330,502** | 204,038 <br> **678,310** | 95.49% <br> **98.79%** | 0.9591 <br> **0.9890** | 56.9s <br> **43.2s** |
+| **SHAR** | Classical LSTM <br> **MPSQCL + LSTM (Ours)** | — <br> **346,272** | 202,385 <br> **331,921** | 202,385 <br> **678,193** | 76.09% <br> **94.77%** | 0.6992 <br> **0.9227** | 50.2s <br> **37.4s** |
+| **HHAR** | Classical LSTM <br> **MPSQCL + LSTM (Ours)** | — <br> **347,040** | 202,502 <br> **330,502** | 202,502 <br> **677,542** | **99.32%** <br> 99.06% | **0.9865** <br> 0.9823 | 980.4s <br> **760.0s** |
+| **MotionSense**| Classical LSTM <br> **MPSQCL + LSTM (Ours)** | — <br> **348,576** | 205,574 <br> **330,502** | 205,574 <br> **679,078** | 98.47% <br> **99.85%** | 0.9788 <br> **0.9977** | 93.1s <br> **40.8s** |
 | **USC-HAD** | Classical LSTM <br> **MPSQCL + LSTM (Ours)** | — <br> **347,040** | 203,276 <br> **331,276** | 203,276 <br> **678,316** | 90.95% <br> **93.43%** | 0.8832 <br> **0.9083** | 197.7s <br> **98.7s** |
-| **MobiAct** | Classical LSTM <br> **MPSQCL + LSTM (Ours)** | — <br> **347,040** | 202,889 <br> **330,889** | 202,889 <br> **677,929** | 98.70% <br> **99.62%** | 0.9632 <br> **0.9889** | 36.9s <br> **28.9s** |
+| **MobiAct** | Classical LSTM <br> **MPSQCL + LSTM (Ours)** | — <br> **347,040** | 202,889 <br> **330,889** | 202,889 <br> **677,929** | 98.70% <br> **99.62%** | 0.9632 <br> **0.9893** | 36.9s <br> **28.9s** |
 
 ---
 
