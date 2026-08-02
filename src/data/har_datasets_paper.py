@@ -155,16 +155,33 @@ def load_unimib_shar_all(data_dir):
     os.makedirs(shar_dir, exist_ok=True)
     mat_path = os.path.join(shar_dir, "uniMiB-SHAR.mat")
 
-    # Download from a public mirror if missing
+    # Download from public mirrors if missing
     if not os.path.exists(mat_path):
-        url = "https://github.com/videoflow/human-activity-recognition/raw/master/uniMiB-SHAR.mat"
-        print(f"Downloading UniMiB-SHAR dataset from {url}...")
-        try:
-            urllib.request.urlretrieve(url, mat_path)
-            print("Download complete!")
-        except Exception as e:
+        urls = [
+            "https://raw.githubusercontent.com/tianzhongsong/HAR-Dataset/master/UniMiB-SHAR/uniMiB-SHAR.mat",
+            "https://github.com/tianzhongsong/HAR-Dataset/raw/master/UniMiB-SHAR/uniMiB-SHAR.mat",
+            "https://github.com/videoflow/human-activity-recognition/raw/master/uniMiB-SHAR.mat",
+        ]
+        downloaded = False
+        for url in urls:
+            print(f"Attempting download of UniMiB-SHAR dataset from {url}...")
+            try:
+                req = urllib.request.Request(
+                    url,
+                    headers={
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                    },
+                )
+                with urllib.request.urlopen(req) as response, open(mat_path, "wb") as out_file:
+                    out_file.write(response.read())
+                print("Download complete!")
+                downloaded = True
+                break
+            except Exception as e:
+                print(f"Notice: mirror {url} failed: {e}")
+        if not downloaded:
             raise RuntimeError(
-                f"Failed to download UniMiB-SHAR dataset: {e}. Please place uniMiB-SHAR.mat manually in {shar_dir}"
+                f"Failed to download UniMiB-SHAR dataset from all mirrors. Please place uniMiB-SHAR.mat manually in {shar_dir}"
             )
 
     print(f"Loading UniMiB-SHAR dataset from {mat_path}...")

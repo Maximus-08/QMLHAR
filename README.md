@@ -232,12 +232,21 @@ The table below evaluates individual component modifications against the strict 
 | **Config 6: No Feature L2-Norm** | 4.0917 | 85.88% | 0.8535 | +2.43% | Preserves magnitude/scale information for downstream classification. |
 | **Config 7: Standard Pipeline** | 3.3437 | **89.67%** | **0.8911** | **+6.20%** | **Combined optimizations yield best performance overall (+6.20% F1).** |
 
-### 2. Multi-View Count ($M$) Ablation Study
+### 2. Multi-View Count ($M$) Ablation Study (UCI-HAR, 20% Subset, 20 Pre-train / 20 Fine-tune Epochs)
 
-*The multi-view ablation sweep across $M \in \{2, 3, 4, 5, 6\}$ is currently executing live on GPU (`task-123`). Results will be compiled automatically in `results/mpsqcl_views_ablation_results.md` upon completion.*
+Empirical evaluation of downstream classification accuracy, macro F1 score, and pre-training runtime scaling across $M \in \{2, 3, 4, 5, 6\}$ positive augmented views:
 
-- **$M = 2$ Views (Completed)**: Pre-train Val Loss: **2.4372** | Test Acc: **87.19%** | Test Macro F1: **0.8654** | Pre-train Time: **110.4s** (5.52s/epoch)
-- **$M = 3, 4, 5, 6$**: Currently running...
+| Number of Views ($M$) | Positive Pair Density | Pre-train Val Loss | Test Accuracy | Test Macro F1 | Delta F1 vs. $M=2$ | Pre-train Time (s) | Sec / Epoch |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **M = 2** | 1 pair / sample | 2.4372 | 87.19% | 0.8654 | - | 110.4s | 5.52s |
+| **M = 3** | 2 pairs / sample | 2.5869 | 88.60% | 0.8823 | +1.69% | 151.5s | 7.57s |
+| **M = 4** | 3 pairs / sample | 2.6198 | 88.79% | 0.8839 | +1.84% | 191.8s | 9.59s |
+| **M = 5** | 4 pairs / sample | 2.8145 | 89.42% | 0.8912 | +2.58% | 258.6s | 12.93s |
+| **M = 6** | 5 pairs / sample | **2.9698** | **90.20%** | **0.8996** | **+3.42%** | 294.6s | 14.73s |
+
+#### Key Takeaways & Trade-offs:
+1. **Multi-Positive Representation Boost**: Increasing $M$ from 2 (SimCLR baseline) to 6 yields a continuous **+3.42% F1 boost** (up to 90.20% accuracy), demonstrating that multi-positive contrastive learning enhances signal invariance.
+2. **Runtime Scaling**: Pre-training execution time scales linearly with $M$ (from 5.52s/epoch at $M=2$ to 14.73s/epoch at $M=6$). $M=4$ remains the recommended balance point between speed and performance.
 
 ---
 
