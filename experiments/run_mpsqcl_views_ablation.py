@@ -189,6 +189,7 @@ def run_single_view_config(n_views, args, device):
         avg_val_loss = total_val_loss / max(len(val_loader), 1)
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss
+            best_encoder_state = {k: v.clone() for k, v in encoder.state_dict().items()}
         final_val_loss = avg_val_loss
 
         if epoch % 5 == 0 or epoch == args.epochs_pretrain:
@@ -199,6 +200,14 @@ def run_single_view_config(n_views, args, device):
     pre_time = time.time() - start_pre_time
     per_epoch_time = pre_time / max(args.epochs_pretrain, 1)
     print(f"Pre-training completed in {pre_time:.2f}s ({per_epoch_time:.2f}s/epoch)")
+
+    # Save pre-trained encoder checkpoint
+    if args.save_checkpoints:
+        ckpt_dir = os.path.join(os.path.dirname(args.output_file) if args.output_file else "results")
+        os.makedirs(ckpt_dir, exist_ok=True)
+        ckpt_path = os.path.join(ckpt_dir, f"encoder_pretrained_{args.dataset}_M{n_views}.pt")
+        torch.save(best_encoder_state, ckpt_path)
+        print(f"Saved pre-trained encoder checkpoint: {ckpt_path}")
 
     # Phase 2: Downstream Linear Classifier Fine-tuning
     print(f"--- Phase 2: Linear Fine-tuning ({args.epochs_finetune} Epochs) ---")
@@ -289,6 +298,8 @@ def main():
     parser.add_argument("--q_layers", type=int, default=3)
     parser.add_argument("--temperature", type=float, default=0.1)
     parser.add_argument("--device_type", type=str, default="default.qubit")
+    parser.add_argument("--save_checkpoints", action="store_true", default=False,
+                        help="Save pre-trained encoder checkpoints after each view config")
     parser.add_argument(
         "--views",
         nargs="+",
